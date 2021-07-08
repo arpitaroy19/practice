@@ -1,0 +1,324 @@
+import json
+
+import psycopg2
+
+import pandas as pd
+
+import boto3
+
+import base64 
+
+from sqlalchemy import create_engine
+
+
+
+solution={
+
+    0: "8314",
+
+    1: "stamp",
+
+    2: "brazil",
+
+    3: "zero",
+
+    4: "tesla",
+
+    5: "envelope",
+
+    8: "eleven",
+
+    9: "scotland",
+
+    10: "february",
+
+    11: "thursday",
+
+    14: "two",
+
+    15: "map",
+
+    16: "two",
+
+    17: "bob",
+
+    18: "ben",
+
+    19: "twentyone",
+
+    6: "seven",
+
+    7: "battery",
+
+    12: "kwalitywalls",
+
+    13: "coffin",
+
+    20: "italy",
+
+    21: "twentyfive",
+
+    22: "bottle",
+
+    24: "end"
+
+}
+
+
+
+def lambda_handler(event, context):
+
+    # TODO implement
+
+    try:
+
+        s3 = boto3.client('s3')
+
+        print(event, context)
+
+        conn = psycopg2.connect("dbname={} user={} host={} password={}".format('vaccine_notification_db', 'covid_admin', 'notification-db.cx1j4ohbdqhc.ap-south-1.rds.amazonaws.com', 'Covid-19%$#'))
+
+        cursor = conn.cursor()
+
+        team_id = event['pathParameters']['team']
+
+        answer = str(event['pathParameters']['answer']).lower()
+
+        print(team_id, answer)
+
+        if team_id in ['kiwi', 'apricot', 'pear', 'coconut', 'watermelon', 'peach', 'jackfruit', 'raspberry', 'cherry', 'pomegrante', 'blueberry', 'figs']:
+
+            engine = create_engine("postgresql://covid_admin:Covid-19%$#@notification-db.cx1j4ohbdqhc.ap-south-1.rds.amazonaws.com:5432/vaccine_notification_db")
+
+            data = pd.read_sql("select * from teams", engine)
+
+            for index, row in data.iterrows():
+
+                if team_id == row['team_id']:
+
+                    print(event, context)
+
+                    question_id = row['question_id']
+
+                    expected_answer = solution[question_id]
+
+                    if answer == 'question':
+
+                        print(event, context)
+
+                        response = s3.get_object(
+
+                            Bucket='treasure-hunt-clues',
+
+                            Key= "Slide" + str(question_id)+".JPG",
+
+                        )
+
+                        image = response['Body'].read()
+
+                        return {
+
+                            'headers': { "Content-Type": "image/JPG" },
+
+                            'statusCode': 201,
+
+                            'body': base64.b64encode(image).decode('utf-8'),
+
+                            'isBase64Encoded': True
+
+                        }
+
+                    if answer == expected_answer:
+
+                        if question_id == 22:
+
+                            print("Yo")
+
+                            response = s3.get_object(
+
+                                Bucket='treasure-hunt-clues',
+
+                                Key= "Slide24.JPG",
+
+                                # Key= "S1.png",
+
+                            )
+
+                            image = response['Body'].read()
+
+                            query = "UPDATE teams SET question_id = " + str(24) + " WHERE team_id = '" + team_id + "'"
+
+                            cursor.execute(query)
+
+                            conn.commit()
+
+                            return {
+
+                                'headers': { "Content-Type": "image/JPG" },
+
+                                'statusCode': 201,
+
+                                'body': base64.b64encode(image).decode('utf-8'),
+
+                                'isBase64Encoded': True
+
+                            }
+
+                        if question_id == 5:
+
+                            next_question = 8
+
+                        elif question_id == 11:
+
+                            next_question = 14
+
+                        elif question_id == 18:
+
+                            next_question = 22
+
+                        else:
+
+                            next_question = question_id + 1
+
+                        response = s3.get_object(
+
+                            Bucket='treasure-hunt-clues',
+
+                            Key= "Slide" + str(next_question)+".JPG",
+
+                            # Key= "S1.png",
+
+                        )
+
+                        image = response['Body'].read()
+
+                        # print(image)
+
+                        query = "UPDATE teams SET question_id = " + str(next_question) + " WHERE team_id = '" + team_id + "'"
+
+                        cursor.execute(query)
+
+                        conn.commit()
+
+                        print("Done")
+
+                        return {
+
+                            'headers': { "Content-Type": "image/JPG" },
+
+                            'statusCode': 201,
+
+                            # 'headers': { "Content-Type": "image/png" },
+
+                            # 'statusCode': 202,
+
+                            'body': base64.b64encode(image).decode('utf-8'),
+
+                            'isBase64Encoded': True
+
+                        }
+
+                    else:
+
+                        if question_id in [5,11,18]:
+
+                            next_question = question_id + 1
+
+                            response = s3.get_object(
+
+                                Bucket='treasure-hunt-clues',
+
+                                Key= "Slide" + str(next_question)+".JPG",
+
+                                # Key= "S1.png",
+
+                            )
+
+                            image = response['Body'].read()
+
+                            # print(image)
+
+                            query = "UPDATE teams SET question_id = " + str(next_question) + " WHERE team_id = '" + team_id + "'"
+
+                            cursor.execute(query)
+
+                            conn.commit()
+
+                            print("Done")
+
+                            return {
+
+                                'headers': { "Content-Type": "image/JPG" },
+
+                                'statusCode': 201,
+
+                                # 'headers': { "Content-Type": "image/png" },
+
+                                # 'statusCode': 202,
+
+                                'body': base64.b64encode(image).decode('utf-8'),
+
+                                'isBase64Encoded': True
+
+                            }
+
+                        else:
+
+                            response = s3.get_object(
+
+                                Bucket='treasure-hunt-clues',
+
+                                Key= "Error2.JPG",
+
+                                # Key= "S1.png",
+
+                            )
+
+                            image = response['Body'].read()
+
+                            return {
+
+                                'headers': { "Content-Type": "image/JPG" },
+
+                                'statusCode': 201,
+
+                                'body': base64.b64encode(image).decode('utf-8'),
+
+                                'isBase64Encoded': True
+
+                            }
+
+        else:
+
+            response = s3.get_object(
+
+                Bucket='treasure-hunt-clues',
+
+                Key= "Error1.JPG",
+
+                # Key= "S1.png",
+
+            )
+
+            image = response['Body'].read()
+
+            return {
+
+                'headers': { "Content-Type": "image/JPG" },
+
+                'statusCode': 201,
+
+                'body': base64.b64encode(image).decode('utf-8'),
+
+                'isBase64Encoded': True
+
+            }
+
+           
+
+    except Exception as error:
+
+        print("Error", str(error))
+
+        return 'Something went wrong, Please try again later!'
+lambda_func.txt
