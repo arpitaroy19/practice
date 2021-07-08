@@ -1,0 +1,43 @@
+import json
+
+import pandas as pd
+
+from sqlalchemy import create_engine
+
+
+
+def lambda_handler(event, context):
+
+    # TODO implement
+
+    try:
+
+        engine = create_engine("postgresql://covid_admin:Covid-19%$#@notification-db.cx1j4ohbdqhc.ap-south-1.rds.amazonaws.com:5432/vaccine_notification_db")
+
+        data = pd.read_sql("select * from teams", engine)
+
+        result = data.to_json(orient="records")
+
+        parsed = json.loads(result)
+
+        print(result)
+
+        return {
+
+            'statusCode': 200,
+
+            'body': parsed
+
+        }
+
+    except Exception as error:
+
+        print("Error", error)
+
+        return {
+
+            'statusCode': 400,
+
+            'body': 'Something went wrong, Please try again later!'
+
+        }
